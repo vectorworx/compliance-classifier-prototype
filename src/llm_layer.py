@@ -3,6 +3,11 @@
 from dataclasses import dataclass
 from typing import List, Dict, Optional
 import os, re
+from src.env import load_env, require
+
+load_env()
+OPENAI_API_KEY = require("OPENAI_API_KEY")
+ANTHROPIC_API_KEY = require("ANTHROPIC_API_KEY")
 
 
 @dataclass

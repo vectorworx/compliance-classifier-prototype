@@ -6,19 +6,17 @@ import re, glob, csv, json, argparse, datetime
 from collections import Counter
 from src.llm_layer import analyze_text
 from src.audit import write_events, new_run_id
+from src.env import load_env
 
 APP_VERSION = "0.1.0"
-
-# Optional deps you already installed:
-# pdfplumber, python-docx, PyYAML, pandas (pandas not required here)
-
-# ---------- Ingestion ----------
 import pdfplumber
 from docx import Document as DocxDocument
 import yaml
 
 MAX_CHUNK = 1200
 CHUNK_OVERLAP = 150
+
+load_env()  # load .env locally; noop in CI
 
 
 def normalize_text(t: str) -> str:
