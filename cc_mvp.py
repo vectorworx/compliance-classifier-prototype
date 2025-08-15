@@ -2,6 +2,10 @@ from pathlib import Path
 import re, glob
 import pdfplumber
 from docx import Document as DocxDocument
+from pathlib import Path
+import csv
+from src.engine import load_rules, scan_chunks
+
 
 MAX_CHUNK = 1200
 CHUNK_OVERLAP = 150
@@ -34,13 +38,42 @@ def chunk_text(text: str):
         if end == n: break
         i = end - CHUNK_OVERLAP
 
+def load_ruleset(regime: str) -> list[Path]:
+    base = Path("rules")
+    if regime.upper() == "GDPR":
+        return [base / "gdpr_critical.yml"]
+    if regime.upper() == "SOC2":
+        return [base / "soc2_critical.yml"]
+    return []
+
+
 def main():
+    import argparse, glob
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--regime", choices=["GDPR","SOC2"], required=True)
+    parser.add_argument("--out", default="data/outputs/findings.csv")
+    args = parser.parse_args()
+
+    rule_files = load_ruleset(args.regime)
+    if not rule_files:
+        print("No rules found. Add files in rules/ .")
+        return
+
+    # load & merge rules
+    rules = []
+    for f in rule_files:
+        rules.extend(load_rules(f))
+    print(f"Loaded {len(rules)} rules for {args.regime}")
+
     docs = sorted(glob.glob("data/docs/*"))
     if not docs:
         print("Put a few files in data/docs/ (PDF, DOCX, or TXT).")
         return
+
+    rows = []
     for p in docs:
         path = Path(p)
+        # ingest
         if path.suffix.lower()==".pdf":
             raw = read_pdf(path)
         elif path.suffix.lower()==".docx":
@@ -48,8 +81,16 @@ def main():
         else:
             raw = read_txt(path)
         text = normalize_text(raw)
-        chunks = list(chunk_text(text))
-        print(f"{path.name}: {len(text):,} chars, {len(chunks)} chunks")
 
-if __name__ == "__main__":
-    main()
+        # scan
+        for finding in scan_chunks(text, rules):
+            finding["doc"] = path.name
+            rows.append(finding)
+
+    Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+    with open(args.out, "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=["doc","rule_id","label","severity","start","end","snippet"])
+        w.writeheader()
+        w.writerows(rows)
+
+    print(f"Wrote {len(rows)} findings → {args.out}")
