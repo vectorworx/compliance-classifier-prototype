@@ -1,3 +1,10 @@
+# Compliance Classifier Prototype
+
+[![CI](https://github.com/vectorworx/compliance-classifier-prototype/actions/workflows/ci.yml/badge.svg)](https://github.com/vectorworx/compliance-classifier-prototype/actions)
+
+> CI runs a demo on each push and uploads outputs as artifacts:
+> **Actions → latest run → Artifacts** → `findings-<run_id>` and `audit-db-<run_id>`.
+
 # Compliance-First Document Classifier (GDPR + SOC 2)
 
 ## Proof Block
@@ -49,3 +56,104 @@ _(Coming in later commits)_
 ## Post-Flight Debrief
 
 _(Coming in later commits)_
+
+## 📄 How to Read the Findings CSV — Vectorworx OneBlock
+
+Every run of the Compliance Classifier produces a `findings_<regime>_<timestamp>.csv` file in the project root.
+
+Example row:
+`rule_id,label,severity,start,end,snippet,doc`
+`GDPR-BREACH-72H,Breach Notification (72h),critical,3,60,"We notify the supervisory authority within seventy-two hours of a personal data breach. All users must use MFA as part of access controls.",sample.txt`
+
+**Column meanings:**
+
+- `rule_id` → Unique ID for the compliance rule triggered.
+- `label` → Human-readable name of the rule.
+- `severity` → Risk level (`critical`, `high`, `medium`, `low`).
+- `start` / `end` → Character offsets in the source document for the match.
+- `snippet` → Exact text fragment that triggered the match.
+- `doc` → File name of the source document.
+
+**Pro tips (VS Code):** Install **Rainbow CSV**, open the file, and you’ll see columns colorized for quick scanning. Use `CTRL+SHIFT+P → CSV: Run SQL Query` to filter findings interactively.
+
+**Why this matters in production:**
+
+- CSVs are lightweight, portable, and quick to review.
+- They serve as **ground truth baseline** before adding AI classification.
+- They’re easy to feed into dashboards, BI tools, or downstream analytics.
+
+### 📊 Audit Dashboard (Read‑Only)
+
+Run a local Streamlit dashboard over the append‑only SQLite audit log:
+
+```bash
+pip install streamlit
+streamlit run streamlit_app.py
+```
+
+## ✅ Results (Baseline Before AI)
+
+This section shows the first end‑to‑end run of the Compliance Classifier on a small, controlled document set. It’s our **baseline** (rules‑only) before layering in AI.
+
+---
+
+### Mini Proof Block (Sample Output)
+
+PROOF BLOCK — GDPR
+
+📄 Docs scanned: 3
+🔎 Findings: 2 | 🔥 Critical: 1 | ⬆ High: 0
+🏷️ Top rule hit: GDPR-BREACH-72H ×1
+⬇ Output: data/outputs/findings_gdpr_20250815-153200.csv
+⬇ Output: data/outputs/findings_gdpr_20250815-153200.json
+🧾 Audit run_id: 3a3f7b1c-2d9b-4b33-b6e8-0a1b0e34d2f1
+
+**What this means:**
+
+- The engine detected the **72‑hour breach notification clause** in `breach_gdpr.pdf` (critical).
+- `clean_soc2.txt` produced **no GDPR findings** (as expected).
+- `edgecase_gdpr.txt` avoided the exact pattern (by design) — this becomes a great **test case for the AI layer**.
+
+---
+
+### Dashboard Snapshot
+
+> _Read‑only Streamlit dashboard over the append‑only SQLite audit log._
+
+- **Filters:** regime, rule_id, document, date range
+- **KPIs:** total findings, unique docs, unique rules hit
+- **Tables:** recent findings, per‑rule counts, per‑doc counts
+- **Export:** download filtered CSV
+
+**Run locally:**
+
+```bash
+streamlit run dashboard.py
+
+Files Produced
+
+CSV/JSON findings (timestamped): data/outputs/findings_<regime>_<timestamp>.csv|.json
+
+Append‑only audit log: data/cc_audit.sqlite (queried by the dashboard)
+
+Why This Matters
+
+Deterministic baseline: Rules give us a fast, auditable ground truth with zero token cost.
+
+Paper trail: Every run is logged with run_id, version, and timestamp in SQLite — easy to prove and replay.
+
+Ready for AI: Ambiguous/edge cases (like the “promptly inform regulators” phrasing) become targets for the upcoming LLM pass with confidence + rationale.
+```
+
+## Build • Test • Demo
+
+[![CI](https://github.com/vectorworx/compliance-classifier-prototype/actions/workflows/ci.yml/badge.svg)](../../actions)
+
+### 1) Setup
+
+```bash
+python -m venv .venv
+source .venv/Scripts/activate   # Windows Git Bash
+python -m pip install --upgrade pip
+pip install -r requirements.txt || pip install pdfplumber python-docx PyYAML pandas pytest streamlit
+```

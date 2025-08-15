@@ -1,0 +1,6 @@
+SOC 2 Access Control Policy
+
+All users are required to use multi-factor authentication (MFA) for all system logins.
+Administrative access is logged and reviewed monthly.
+
+No sensitive customer data is stored on unencrypted devices.

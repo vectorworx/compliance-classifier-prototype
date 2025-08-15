@@ -1,6 +1,8 @@
 from pathlib import Path
 import sqlite3, datetime, uuid
-from typing import Iterable, Dict, Tuple
+from typing import Dict, Tuple
+
+from collections.abc import Iterable
 
 DB_PATH = Path("data/cc_audit.sqlite")
 
@@ -23,18 +25,22 @@ CREATE INDEX IF NOT EXISTS idx_events_regime ON events(regime);
 CREATE INDEX IF NOT EXISTS idx_events_rule   ON events(rule_id);
 """
 
+
 def init_db() -> None:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(DB_PATH) as cx:
         cx.executescript(SCHEMA)
 
+
 def new_run_id() -> str:
     return str(uuid.uuid4())
+
 
 def now_iso() -> str:
     return datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
 
-def write_events(rows: Iterable[Dict], regime: str, version: str, run_id: str) -> Tuple[int, str]:
+
+def write_events(rows: Iterable[dict], regime: str, version: str, run_id: str) -> tuple[int, str]:
     """Persist findings to SQLite; returns (count, db_path)."""
     init_db()
     ts = now_iso()

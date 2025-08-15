@@ -1,0 +1,28 @@
+{
+  "name": "Compliance Classifier Dev",
+  "image": "mcr.microsoft.com/devcontainers/python:3.13-bookworm",
+  "features": {},
+  "forwardPorts": [8501],
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-toolsai.jupyter",
+        "ms-azuretools.vscode-docker",
+        "redhat.vscode-yaml",
+        "mechatroner.rainbow-csv",
+        "eamodio.gitlens"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.env.linux": {
+          "PYTHONIOENCODING": "utf-8",
+          "PYTHONUTF8": "1"
+        }
+      }
+    }
+  },
+  "remoteUser": "vscode"
+}

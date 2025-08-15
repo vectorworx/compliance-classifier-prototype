@@ -1,0 +1,4 @@
+Incident Response Statement
+
+In the event of a personal data incident, we inform regulators promptly in line with best practices.
+Exact notification timelines may vary depending on jurisdiction.

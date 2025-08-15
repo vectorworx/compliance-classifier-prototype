@@ -72,9 +72,3 @@ deactivate
 - Tested on **Python 3.11+** (recommended) and **pip 25+**.
 
 ## Commit this file
-
-```bash
-git add install_instructions.md
-git commit -S -m "docs: add full installation guide (#ccenv)"
-git push origin main
-```
