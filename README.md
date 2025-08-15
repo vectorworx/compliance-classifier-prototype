@@ -157,3 +157,53 @@ source .venv/Scripts/activate   # Windows Git Bash
 python -m pip install --upgrade pip
 pip install -r requirements.txt || pip install pdfplumber python-docx PyYAML pandas pytest streamlit
 ```
+
+## 🚀 Quickstart — Local & Codespaces (Vectorworx One‑Block)
+
+Production‑first setup that runs in minutes. This section is self‑contained and ready to paste into your README.
+
+---
+
+### Local Setup
+
+```bash
+# 1) Create & activate virtual environment
+python -m venv .venv
+# Windows (Git Bash/PowerShell):
+source .venv/Scripts/activate
+# macOS/Linux:
+# source .venv/bin/activate
+
+# 2) Install dependencies
+python -m pip install --upgrade pip
+pip install -r requirements.txt \
+  || pip install pdfplumber python-docx PyYAML pandas pytest streamlit
+
+# 3) (Optional) Enable AI-assisted mode for later
+cp .env.example .env
+# Fill in OPENAI_API_KEY / ANTHROPIC_API_KEY (keep .env local; never commit)
+
+# 4) Run the compliance classifier (rules-only baseline)
+python cc_mvp.py --regime GDPR
+# or
+python cc_mvp.py --regime SOC2
+
+## What you’ll see (baseline):
+
+Timestamped CSV/JSON in data/outputs/
+
+Append‑only audit log in data/cc_audit.sqlite
+
+Console summary with top rules and preview snippets
+
+☁️ ## One‑Click Codespaces (Zero‑install)
+
+Inside the Codespace terminal:
+
+# Demo run: scans sample docs and writes outputs + audit log
+python demo.py
+
+# Read‑only dashboard over the SQLite audit log
+streamlit run dashboard.py   # Open forwarded Port 8501 in the "Ports" panel
+```
+# Trigger CI
