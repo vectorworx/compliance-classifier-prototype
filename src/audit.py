@@ -38,6 +38,10 @@ def write_events(rows: Iterable[Dict], regime: str, version: str, run_id: str) -
     """Persist findings to SQLite; returns (count, db_path)."""
     init_db()
     ts = now_iso()
+
+    # 🔧 MATERIAL FIX: realize the iterable once so we can both insert and count
+    rows_list = list(rows)
+
     with sqlite3.connect(DB_PATH) as cx:
         cx.executemany(
             """
@@ -50,13 +54,13 @@ def write_events(rows: Iterable[Dict], regime: str, version: str, run_id: str) -
                     run_id,
                     version,
                     regime,
-                    r.get("doc",""),
-                    r["rule_id"],
-                    r.get("label",""),
-                    r.get("severity","info"),
-                    r.get("snippet",""),
+                    r.get("doc", ""),
+                    r.get("rule_id", ""),
+                    r.get("label", ""),
+                    r.get("severity", "info"),
+                    r.get("snippet", ""),
                 )
-                for r in rows
+                for r in rows_list
             ],
         )
-    return (len(list(rows)) if not isinstance(rows, list) else len(rows), str(DB_PATH))
+    return (len(rows_list), str(DB_PATH))
