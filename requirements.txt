@@ -1,0 +1,6 @@
+pdfplumber
+python-docx
+tiktoken
+pydantic
+PyYAML
+pandas
