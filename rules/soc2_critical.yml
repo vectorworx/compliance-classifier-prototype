@@ -1,0 +1,16 @@
+rules:
+  - id: SOC2-ACCESS-CONTROL
+    label: Access Control
+    severity: critical
+    type: regex
+    value: "(?i)(least privilege|role[-\\s]?based access|RBAC|multi[-\\s]?factor authentication|MFA|access controls?)"
+  - id: SOC2-BACKUP-TEST
+    label: Backup Restoration Testing
+    severity: critical
+    type: regex
+    value: "(?i)(backup(s)?|restore tests?).{0,60}(quarterly|monthly|periodic|regular)"
+  - id: SOC2-ENCRYPTION
+    label: Encryption In Transit & At Rest
+    severity: critical
+    type: regex
+    value: "(?i)(encrypt(ed|ion)|TLS|HTTPS|at rest|in transit)"
