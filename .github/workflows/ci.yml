@@ -8,6 +8,9 @@ on:
 
 permissions:
   contents: read
+  checks: write
+  pull-requests: write
+  statuses: write
 
 jobs:
   build-and-test:
@@ -16,6 +19,7 @@ jobs:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       GITHUB_ACTIONS: "true"
+      PYTHONPATH: src
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -38,21 +42,49 @@ jobs:
       - name: Code style (Black check)
         run: black --check .
 
-      - name: Run tests with coverage (rules-only path)
-        # Using explicit flags so it works even without pyproject config
+      - name: Run tests with coverage
         run: |
-          python -m pytest -q -m "not ai" --cov=./ --cov-report=term-missing --cov-report=xml:coverage.xml
+          rm -f .coverage coverage.xml || true
+          python -m pytest -q -m "not ai" \
+            --cov=src \
+            --cov-report=term-missing:skip-covered \
+            --cov-report=xml:coverage.xml
+          test -s coverage.xml
+          ls -l coverage.xml
+
+      - name: Upload coverage.xml artifact (debug)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml-${{ github.run_id }}
+          path: coverage.xml
+          if-no-files-found: error
+
+      - name: Sanity check CODECOV_TOKEN availability
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: |
+          if [ -z "${CODECOV_TOKEN}" ]; then
+            echo "ERROR: CODECOV_TOKEN is not available (forked PRs cannot access secrets)."
+            exit 1
+          else
+            echo "Codecov token is present (masked)."
+          fi
 
       - name: Upload coverage to Codecov
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
         uses: codecov/codecov-action@v4
         with:
-          files: coverage.xml
+          files: ./coverage.xml
           flags: unittests
+          name: compliance-classifier
+          token: ${{ secrets.CODECOV_TOKEN }} # required for protected branches
+          slug: vectorworx/compliance-classifier-prototype # be explicit
+          override_commit: ${{ github.sha }} # <- fixed
+          override_branch: ${{ github.head_ref || github.ref_name }} # <- valid input
+          fail_ci_if_error: true
           verbose: true
-        env:
-          # For public repos + GitHub App install, no CODECOV_TOKEN needed.
-          # If you ever need a token (private repo), add CODECOV_TOKEN in GitHub Secrets.
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   demo:
     runs-on: ubuntu-latest

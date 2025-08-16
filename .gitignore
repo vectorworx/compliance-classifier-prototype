@@ -18,3 +18,11 @@ data/outputs/
 .env
 .env
 .env
+.coverage
+coverage.xml
+.coveragerc.bak
+pytest.ini.bak
+.coveragerc.bak
+pytest.ini.bak
+.coveragerc.bak
+pytest.ini.bak
