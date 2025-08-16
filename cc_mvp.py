@@ -234,7 +234,7 @@ def print_summary(rows, regime: str, processed_docs):
     llm_count = sum(1 for r in rows if r.get("source") == "llm")
 
     print("\n============================")
-    print(f" Compliance Results — {regime}")
+    print(f" Compliance Results - {regime}")
     print("============================")
     print(f"Processed docs: {len(processed_docs)} -> {processed_docs}")
     print(f"Total findings: {total}  (AI adds: {llm_count})")
