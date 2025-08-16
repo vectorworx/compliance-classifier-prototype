@@ -1,0 +1,7 @@
+Security Controls Overview (SOC 2)
+
+All users must use multi-factor authentication (MFA) for interactive access to production systems.
+Access is provisioned on a least privilege basis and reviewed quarterly.
+
+Security events are logged centrally; logs are retained for at least 90 days online and are reviewed weekly
+for anomalies. Administrative actions are auditable and subject to change management.

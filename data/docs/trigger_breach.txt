@@ -1,0 +1,1 @@
+We notify the supervisory authority within seventy-two hours of a personal data breach. All users must use MFA as part of access controls.

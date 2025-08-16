@@ -4,13 +4,15 @@ rules:
     severity: critical
     type: regex
     value: "(?i)(notify|notification).{0,80}(supervisory|authority|controller).{0,80}(72\\s*hours|seventy[-\\s]?two\\s*hours|three\\s*days|undue\\s*delay)"
+
   - id: GDPR-ERASURE
     label: Right to Erasure
-    severity: critical
+    severity: high
     type: regex
     value: "(?i)(right to (erasure|be forgotten)|erase personal data)"
+
   - id: GDPR-PURPOSE-LIMIT
     label: Purpose Limitation
-    severity: critical
+    severity: high
     type: regex
     value: "(?i)collected for (specified|explicit|legitimate) purposes"

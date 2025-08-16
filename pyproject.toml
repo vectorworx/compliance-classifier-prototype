@@ -9,3 +9,5 @@ extend-exclude = '''
   | ^\.github/
 )
 '''
+[tool.pytest.ini_options]
+addopts = "-q --cov=./ --cov-report=term-missing --cov-report=xml:coverage.xml"
