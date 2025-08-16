@@ -20,3 +20,5 @@ data/outputs/
 .env
 .coverage
 coverage.xml
+.coveragerc.bak
+pytest.ini.bak
