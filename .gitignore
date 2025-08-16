@@ -24,3 +24,5 @@ coverage.xml
 pytest.ini.bak
 .coveragerc.bak
 pytest.ini.bak
+.coveragerc.bak
+pytest.ini.bak

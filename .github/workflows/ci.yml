@@ -6,7 +6,6 @@ on:
   pull_request:
     branches: ["main"]
 
-# Needed so Codecov can post statuses/comments on protected branches
 permissions:
   contents: read
   checks: write
@@ -53,7 +52,6 @@ jobs:
           test -s coverage.xml
           ls -l coverage.xml
 
-      # Optional: keep coverage.xml for inspection
       - name: Upload coverage.xml artifact (debug)
         if: always()
         uses: actions/upload-artifact@v4
@@ -62,7 +60,6 @@ jobs:
           path: coverage.xml
           if-no-files-found: error
 
-      # Ensure the secret is actually available (fork PRs cannot read repo secrets)
       - name: Sanity check CODECOV_TOKEN availability
         if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
         env:
@@ -84,8 +81,8 @@ jobs:
           name: compliance-classifier
           token: ${{ secrets.CODECOV_TOKEN }} # required for protected branches
           slug: vectorworx/compliance-classifier-prototype # be explicit
-          commit_sha: ${{ github.sha }} # be explicit
-          branch: ${{ github.head_ref || github.ref_name }} # be explicit
+          override_commit: ${{ github.sha }} # <- fixed
+          override_branch: ${{ github.head_ref || github.ref_name }} # <- valid input
           fail_ci_if_error: true
           verbose: true
 
