@@ -154,38 +154,43 @@ def process_docs(regime: str, use_ai: bool = False):
     all_rows = []
     doc_list = []
     for path in docs:
-        # ingest per suffix
-        suffix = path.suffix.lower()
-        if suffix == ".pdf":
-            raw = read_pdf(path)
-        elif suffix == ".docx":
-            raw = read_docx(path)
-        else:
-            raw = read_txt(path)
-        text = normalize_text(raw)
+        try:
+            # ingest per suffix
+            suffix = path.suffix.lower()
+            if suffix == ".pdf":
+                raw = read_pdf(path)
+            elif suffix == ".docx":
+                raw = read_docx(path)
+            else:
+                raw = read_txt(path)
+            text = normalize_text(raw)
 
-        # (simple chunking placeholder for future)
-        _ = list(chunk_text(text))
+            # (simple chunking placeholder for future)
+            _ = list(chunk_text(text))
 
-        # scan (rules-first)
-        hits = list(scan_text(text, rules))
+            # scan (rules-first)
+            hits = list(scan_text(text, rules))
 
-        # If rules miss and AI requested, try AI assistance
-        if use_ai and not hits and analyze_text is not None:
-            try:
-                llm_hits = analyze_text(regime, text)
-                for h in llm_hits:
-                    h["doc"] = path.name
-                    h.setdefault("source", "llm")
-                hits.extend(llm_hits)
-            except Exception as e:
-                print(f"⚠ AI analysis failed on {path.name}: {e}")
+            # If rules miss and AI requested, try AI assistance
+            if use_ai and not hits and analyze_text is not None:
+                try:
+                    llm_hits = analyze_text(regime, text)
+                    for h in llm_hits:
+                        h["doc"] = path.name
+                        h.setdefault("source", "llm")
+                    hits.extend(llm_hits)
+                except Exception as e:
+                    print(f"⚠ AI analysis failed on {path.name}: {e}")
 
-        # annotate and accumulate
-        for h in hits:
-            h["doc"] = path.name
-        all_rows.extend(hits)
-        doc_list.append(str(path.relative_to("data/docs")))
+            # annotate and accumulate
+            for h in hits:
+                h["doc"] = path.name
+            all_rows.extend(hits)
+            doc_list.append(str(path.relative_to("data/docs")))
+
+        except Exception as e:
+            # Production-friendly behavior: skip bad files, keep pipeline alive
+            print(f"⚠ Skipping {path} due to error: {e}")
 
     return all_rows, doc_list
 
