@@ -6,8 +6,12 @@ on:
   pull_request:
     branches: ["main"]
 
+# Allow Codecov to post checks/statuses on PRs
 permissions:
   contents: read
+  checks: write
+  pull-requests: write
+  statuses: write
 
 jobs:
   build-and-test:
@@ -38,22 +42,30 @@ jobs:
       - name: Code style (Black check)
         run: black --check .
 
-      - name: Run tests with coverage (rules-only path)
-        # Using explicit flags so it works even without pyproject config
+      - name: Run tests with coverage (src layout)
+        # Ensures src/ is importable, emits coverage.xml, and asserts it exists
+        env:
+          PYTHONPATH: src
         run: |
-          python -m pytest -q -m "not ai" --cov=./ --cov-report=term-missing --cov-report=xml:coverage.xml
+          rm -f .coverage coverage.xml || true
+          python -m pytest -q -m "not ai" \
+            --cov=src \
+            --cov-report=term-missing:skip-covered \
+            --cov-report=xml:coverage.xml
+          test -s coverage.xml
+          ls -l coverage.xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-          files: coverage.xml
+          files: ./coverage.xml
           flags: unittests
           name: compliance-classifier
           fail_ci_if_error: true
           verbose: true
         env:
-          CODECOV_SLUG: vectorworx/compliance-classifier-prototype
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }} # optional for public repos
+          # Only required for private repos; safe to leave set
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   demo:
     runs-on: ubuntu-latest
