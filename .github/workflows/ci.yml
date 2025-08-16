@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: ["main"]
 
-# Allow Codecov to post checks/statuses on PRs
+# allow Codecov to post statuses/comments
 permissions:
   contents: read
   checks: write
@@ -43,7 +43,6 @@ jobs:
         run: black --check .
 
       - name: Run tests with coverage (src layout)
-        # Ensures src/ is importable, emits coverage.xml, and asserts it exists
         env:
           PYTHONPATH: src
         run: |
@@ -55,17 +54,32 @@ jobs:
           test -s coverage.xml
           ls -l coverage.xml
 
+      # Only run token checks & upload when secrets are available (i.e., not from forked PRs)
+      - name: Sanity check CODECOV_TOKEN is available
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: |
+          if [ -z "${CODECOV_TOKEN}" ]; then
+            echo "ERROR: CODECOV_TOKEN is not available to this workflow (fork PRs cannot access secrets)."
+            exit 1
+          else
+            echo "Codecov token is present (value is masked)."
+          fi
+
       - name: Upload coverage to Codecov
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
         uses: codecov/codecov-action@v4
         with:
           files: ./coverage.xml
           flags: unittests
           name: compliance-classifier
+          token: ${{ secrets.CODECOV_TOKEN }} # required for protected branches
+          slug: vectorworx/compliance-classifier-prototype # be explicit
+          commit_sha: ${{ github.sha }} # be explicit
+          branch: ${{ github.head_ref || github.ref_name }} # be explicit
           fail_ci_if_error: true
           verbose: true
-        env:
-          # Only required for private repos; safe to leave set
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   demo:
     runs-on: ubuntu-latest
