@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
-import glob
 import csv
 import json
 import argparse
@@ -14,7 +13,7 @@ from collections import Counter
 
 from src.audit import write_events, new_run_id
 
-APP_VERSION = "0.2.0"
+APP_VERSION = "0.2.1"
 
 # ---------- Optional deps (installed in requirements / CI) ----------
 import pdfplumber
@@ -24,6 +23,7 @@ import yaml
 # ---------- Ingestion / normalization ----------
 MAX_CHUNK = 1200
 CHUNK_OVERLAP = 150
+ALLOWED_SUFFIXES = {".txt", ".pdf", ".docx"}
 
 
 def normalize_text(t: str) -> str:
@@ -113,9 +113,24 @@ def scan_text(text: str, rules: list[Rule]):
             }
 
 
+# ---------- Input discovery (recurse + skip dirs) ----------
+def iter_input_docs(root: Path = Path("data/docs")) -> list[Path]:
+    """
+    Return all files under data/docs/ (recursively) that match allowed suffixes.
+    Skips directories to avoid PermissionError.
+    """
+    if not root.exists():
+        return []
+    docs: list[Path] = []
+    for p in root.rglob("*"):
+        if p.is_file() and p.suffix.lower() in ALLOWED_SUFFIXES:
+            docs.append(p)
+    return sorted(docs)
+
+
 # ---------- Orchestration ----------
 def process_docs(regime: str, use_ai: bool = False):
-    docs = sorted(glob.glob("data/docs/*"))
+    docs = iter_input_docs(Path("data/docs"))
     if not docs:
         print("⚠ No input docs found. Add files under data/docs/ (PDF/DOCX/TXT).")
         return [], []
@@ -138,9 +153,8 @@ def process_docs(regime: str, use_ai: bool = False):
 
     all_rows = []
     doc_list = []
-    for p in docs:
-        path = Path(p)
-        # ingest
+    for path in docs:
+        # ingest per suffix
         suffix = path.suffix.lower()
         if suffix == ".pdf":
             raw = read_pdf(path)
@@ -171,7 +185,7 @@ def process_docs(regime: str, use_ai: bool = False):
         for h in hits:
             h["doc"] = path.name
         all_rows.extend(hits)
-        doc_list.append(path.name)
+        doc_list.append(str(path.relative_to("data/docs")))
 
     return all_rows, doc_list
 
