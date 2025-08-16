@@ -110,3 +110,34 @@ def sandbox_docs() -> callable:
         return copied
 
     return _copy
+
+
+# Ensure src modules are imported so coverage can measure them
+import os, sys, importlib
+
+# put ./src on the path (pytest.ini does this too; belt-and-suspenders)
+HERE = os.path.dirname(__file__)
+sys.path.insert(0, os.path.abspath(os.path.join(HERE, "..", "src")))
+
+# import the modules that live directly under src/
+for mod in ("audit", "engine", "env", "llm_layer"):
+    try:
+        importlib.import_module(mod)
+    except Exception as e:
+        # don't fail tests for import issues here; coverage just won't include that module
+        print(f"[conftest] warning: could not import {mod}: {e}")
+
+# optional: quiet noisy sqlite ResourceWarnings in CI
+import gc, sqlite3, pytest
+
+
+@pytest.fixture(autouse=True)
+def _close_sqlite_handles():
+    yield
+    gc.collect()
+    for obj in gc.get_objects():
+        if isinstance(obj, sqlite3.Connection):
+            try:
+                obj.close()
+            except Exception:
+                pass

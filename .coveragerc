@@ -1,11 +1,6 @@
 [run]
-branch = True
-omit =
-    .venv/*
-    tests/*
-    **/__init__.py
+source = src
 
 [report]
-skip_empty = True
 show_missing = True
-fail_under = 0
+skip_covered = True
