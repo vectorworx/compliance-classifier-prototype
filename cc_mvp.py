@@ -13,9 +13,9 @@ from collections import Counter
 
 from src.audit import write_events, new_run_id
 
-APP_VERSION = "0.2.1"
+APP_VERSION = "0.2.2"  # ASCII-only stdout + per-file resilience
 
-# ---------- Optional deps (installed in requirements / CI) ----------
+# ---------- Optional deps ----------
 import pdfplumber
 from docx import Document as DocxDocument
 import yaml
@@ -132,12 +132,12 @@ def iter_input_docs(root: Path = Path("data/docs")) -> list[Path]:
 def process_docs(regime: str, use_ai: bool = False):
     docs = iter_input_docs(Path("data/docs"))
     if not docs:
-        print("⚠ No input docs found. Add files under data/docs/ (PDF/DOCX/TXT).")
+        print("WARN: No input docs found. Add files under data/docs/ (PDF/DOCX/TXT).")
         return [], []
 
     rules = load_ruleset(regime)
     if not rules:
-        print(f"⚠ No rules loaded for {regime}. Check rules/ folder.")
+        print(f"WARN: No rules loaded for {regime}. Check rules/ folder.")
         return [], []
 
     # Lazy import AI only if needed and requested
@@ -148,7 +148,7 @@ def process_docs(regime: str, use_ai: bool = False):
 
             analyze_text = _analyze_text
         except Exception as e:
-            print(f"⚠ AI layer unavailable: {e}. Proceeding rules-only.")
+            print(f"WARN: AI layer unavailable: {e}. Proceeding rules-only.")
             use_ai = False
 
     all_rows = []
@@ -180,7 +180,7 @@ def process_docs(regime: str, use_ai: bool = False):
                         h.setdefault("source", "llm")
                     hits.extend(llm_hits)
                 except Exception as e:
-                    print(f"⚠ AI analysis failed on {path.name}: {e}")
+                    print(f"WARN: AI analysis failed on {path.name}: {e}")
 
             # annotate and accumulate
             for h in hits:
@@ -190,7 +190,7 @@ def process_docs(regime: str, use_ai: bool = False):
 
         except Exception as e:
             # Production-friendly behavior: skip bad files, keep pipeline alive
-            print(f"⚠ Skipping {path} due to error: {e}")
+            print(f"WARN: Skipping {path} due to error: {e}")
 
     return all_rows, doc_list
 
@@ -248,7 +248,9 @@ def print_summary(rows, regime: str, processed_docs):
             s = r["snippet"]
             src = r.get("source", "rules")
             extra = f" [{src}, conf={r.get('confidence')}]" if src == "llm" else ""
-            print(f"  • [{r['doc']}] {r['rule_id']}{extra}: {s[:140]}{'…' if len(s) > 140 else ''}")
+            # avoid unicode ellipsis; use three dots
+            preview = s[:140] + ("..." if len(s) > 140 else "")
+            print(f"  • [{r['doc']}] {r['rule_id']}{extra}: {preview}")
     else:
         print("No matches found.")
 
