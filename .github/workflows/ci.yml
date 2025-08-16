@@ -48,11 +48,12 @@ jobs:
         with:
           files: coverage.xml
           flags: unittests
+          name: compliance-classifier
+          fail_ci_if_error: true
           verbose: true
         env:
-          # For public repos + GitHub App install, no CODECOV_TOKEN needed.
-          # If you ever need a token (private repo), add CODECOV_TOKEN in GitHub Secrets.
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          CODECOV_SLUG: vectorworx/compliance-classifier-prototype
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }} # optional for public repos
 
   demo:
     runs-on: ubuntu-latest
