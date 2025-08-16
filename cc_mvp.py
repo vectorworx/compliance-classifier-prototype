@@ -1,22 +1,29 @@
-# cc_mvp.py — Compliance Classifier MVP with visible output + file writes
+# cc_mvp.py — Compliance Classifier MVP (rules-first; optional AI)
 # Tags: #ccengine #ccrules #ccproof
 
-from pathlib import Path
-import re, glob, csv, json, argparse, datetime
-from collections import Counter
-from src.llm_layer import analyze_text
-from src.audit import write_events, new_run_id
-from src.env import load_env
+from __future__ import annotations
 
-APP_VERSION = "0.1.0"
+from pathlib import Path
+import re
+import csv
+import json
+import argparse
+import datetime
+from collections import Counter
+
+from src.audit import write_events, new_run_id
+
+APP_VERSION = "0.2.2"  # ASCII-only stdout + per-file resilience
+
+# ---------- Optional deps ----------
 import pdfplumber
 from docx import Document as DocxDocument
 import yaml
 
+# ---------- Ingestion / normalization ----------
 MAX_CHUNK = 1200
 CHUNK_OVERLAP = 150
-
-load_env()  # load .env locally; noop in CI
+ALLOWED_SUFFIXES = {".txt", ".pdf", ".docx"}
 
 
 def normalize_text(t: str) -> str:
@@ -53,26 +60,29 @@ def chunk_text(text: str):
         i = end - CHUNK_OVERLAP
 
 
-# ---------- Rules ----------
-def load_rules_file(yaml_path: Path):
+# ---------- Rules loading / scanning ----------
+class Rule:
+    __slots__ = ("id", "label", "severity", "pattern")
+
+    def __init__(self, id: str, label: str, severity: str, pattern: re.Pattern):
+        self.id = id
+        self.label = label
+        self.severity = severity
+        self.pattern = pattern
+
+
+def load_rules_file(yaml_path: Path) -> list[Rule]:
     data = yaml.safe_load(yaml_path.read_text(encoding="utf-8"))
-    rules = []
+    rules: list[Rule] = []
     for r in data.get("rules", []):
         if r.get("type", "regex") != "regex":
             continue
         pat = re.compile(r["value"])
-        rules.append(
-            {
-                "id": r["id"],
-                "label": r["label"],
-                "severity": r.get("severity", "info"),
-                "pattern": pat,
-            }
-        )
+        rules.append(Rule(r["id"], r["label"], r.get("severity", "info"), pat))
     return rules
 
 
-def load_ruleset(regime: str):
+def load_ruleset(regime: str) -> list[Rule]:
     base = Path("rules")
     if regime.upper() == "GDPR":
         files = [base / "gdpr_critical.yml"]
@@ -80,7 +90,7 @@ def load_ruleset(regime: str):
         files = [base / "soc2_critical.yml"]
     else:
         files = []
-    rules = []
+    rules: list[Rule] = []
     for f in files:
         if not f.exists():
             raise FileNotFoundError(f"Missing rules file: {f}")
@@ -88,65 +98,99 @@ def load_ruleset(regime: str):
     return rules
 
 
-def scan_text(text: str, rules):
+def scan_text(text: str, rules: list[Rule]):
     for r in rules:
-        for m in r["pattern"].finditer(text):
+        for m in r.pattern.finditer(text):
             start, end = m.span()
             snippet = text[max(0, start - 80) : min(len(text), end + 80)].replace("\n", " ")
             yield {
-                "rule_id": r["id"],
-                "label": r["label"],
-                "severity": r["severity"],
+                "rule_id": r.id,
+                "label": r.label,
+                "severity": r.severity,
                 "start": start,
                 "end": end,
                 "snippet": snippet,
             }
 
 
+# ---------- Input discovery (recurse + skip dirs) ----------
+def iter_input_docs(root: Path = Path("data/docs")) -> list[Path]:
+    """
+    Return all files under data/docs/ (recursively) that match allowed suffixes.
+    Skips directories to avoid PermissionError.
+    """
+    if not root.exists():
+        return []
+    docs: list[Path] = []
+    for p in root.rglob("*"):
+        if p.is_file() and p.suffix.lower() in ALLOWED_SUFFIXES:
+            docs.append(p)
+    return sorted(docs)
+
+
 # ---------- Orchestration ----------
-def process_docs(regime: str):
-    docs = sorted(glob.glob("data/docs/*"))
+def process_docs(regime: str, use_ai: bool = False):
+    docs = iter_input_docs(Path("data/docs"))
     if not docs:
-        print("⚠ No input docs found. Add files under data/docs/ (PDF/DOCX/TXT).")
+        print("WARN: No input docs found. Add files under data/docs/ (PDF/DOCX/TXT).")
         return [], []
 
     rules = load_ruleset(regime)
     if not rules:
-        print(f"⚠ No rules loaded for {regime}. Check rules/ folder.")
+        print(f"WARN: No rules loaded for {regime}. Check rules/ folder.")
         return [], []
+
+    # Lazy import AI only if needed and requested
+    analyze_text = None
+    if use_ai:
+        try:
+            from src.llm_layer import analyze_text as _analyze_text
+
+            analyze_text = _analyze_text
+        except Exception as e:
+            print(f"WARN: AI layer unavailable: {e}. Proceeding rules-only.")
+            use_ai = False
 
     all_rows = []
     doc_list = []
-    for p in docs:
-        path = Path(p)
-        # ingest
-        if path.suffix.lower() == ".pdf":
-            raw = read_pdf(path)
-        elif path.suffix.lower() == ".docx":
-            raw = read_docx(path)
-        else:
-            raw = read_txt(path)
-        text = normalize_text(raw)
+    for path in docs:
+        try:
+            # ingest per suffix
+            suffix = path.suffix.lower()
+            if suffix == ".pdf":
+                raw = read_pdf(path)
+            elif suffix == ".docx":
+                raw = read_docx(path)
+            else:
+                raw = read_txt(path)
+            text = normalize_text(raw)
 
-        # (simple chunking here for realism; we scan full text)
-        _ = list(chunk_text(text))  # placeholder for future chunk-level LLM
+            # (simple chunking placeholder for future)
+            _ = list(chunk_text(text))
 
-        # rules scan
-        hits = list(scan_text(text, rules))
+            # scan (rules-first)
+            hits = list(scan_text(text, rules))
 
-        # ✅ Targeted LLM: ONLY if there were no rule hits (avoid duplicates)
-        if not hits:
-            llm_hits = analyze_text(regime, text)
-            for h in llm_hits:
+            # If rules miss and AI requested, try AI assistance
+            if use_ai and not hits and analyze_text is not None:
+                try:
+                    llm_hits = analyze_text(regime, text)
+                    for h in llm_hits:
+                        h["doc"] = path.name
+                        h.setdefault("source", "llm")
+                    hits.extend(llm_hits)
+                except Exception as e:
+                    print(f"WARN: AI analysis failed on {path.name}: {e}")
+
+            # annotate and accumulate
+            for h in hits:
                 h["doc"] = path.name
-            hits.extend(llm_hits)
+            all_rows.extend(hits)
+            doc_list.append(str(path.relative_to("data/docs")))
 
-        # finalize doc hits
-        for h in hits:
-            h["doc"] = path.name
-
-        all_rows.extend(hits)
-        doc_list.append(path.name)
+        except Exception as e:
+            # Production-friendly behavior: skip bad files, keep pipeline alive
+            print(f"WARN: Skipping {path} due to error: {e}")
 
     return all_rows, doc_list
 
@@ -187,11 +231,10 @@ def write_outputs(rows, regime: str):
 def print_summary(rows, regime: str, processed_docs):
     total = len(rows)
     by_rule = Counter(r["rule_id"] for r in rows)
-    by_doc = Counter(r["doc"] for r in rows)
     llm_count = sum(1 for r in rows if r.get("source") == "llm")
 
     print("\n============================")
-    print(f" Compliance Results — {regime}")
+    print(f" Compliance Results - {regime}")
     print("============================")
     print(f"Processed docs: {len(processed_docs)} -> {processed_docs}")
     print(f"Total findings: {total}  (AI adds: {llm_count})")
@@ -205,40 +248,32 @@ def print_summary(rows, regime: str, processed_docs):
             s = r["snippet"]
             src = r.get("source", "rules")
             extra = f" [{src}, conf={r.get('confidence')}]" if src == "llm" else ""
-            print(f"  • [{r['doc']}] {r['rule_id']}{extra}: {s[:140]}{'…' if len(s) > 140 else ''}")
+            # avoid unicode ellipsis; use three dots
+            preview = s[:140] + ("..." if len(s) > 140 else "")
+            print(f"  • [{r['doc']}] {r['rule_id']}{extra}: {preview}")
     else:
         print("No matches found.")
-
-
-def ascii_safe(s: str) -> str:
-    # minimal mapping for Windows cp1252 / legacy consoles
-    return (
-        s.replace("→", "->")
-        .replace("📄", "[doc]")
-        .replace("🔎", "[find]")
-        .replace("🔥", "[crit]")
-        .replace("⬆", "[hi]")
-        .replace("🏷️", "[rule]")
-        .replace("⬇", "[out]")
-        .replace("🧾", "[run]")
-    )
 
 
 def main():
     parser = argparse.ArgumentParser(description="Compliance Classifier MVP")
     parser.add_argument("--regime", choices=["GDPR", "SOC2"], required=True)
+    parser.add_argument(
+        "--ai",
+        action="store_true",
+        help="Enable AI-assisted findings when rules miss (requires local API keys).",
+    )
     args = parser.parse_args()
 
-    rows, processed_docs = process_docs(args.regime)
+    rows, processed_docs = process_docs(args.regime, use_ai=args.ai)
     print_summary(rows, args.regime, processed_docs)
 
-    # ✅ Persist to SQLite audit log (fixed indentation)
+    # Persist to SQLite audit log
     run_id = new_run_id()
     if rows:
         count, db_path = write_events(rows, args.regime, APP_VERSION, run_id)
         print(f"\nAudit log: wrote {count} events to {db_path} (run_id={run_id})")
 
-    # write outputs
     if rows:
         csv_path, json_path = write_outputs(rows, args.regime)
         print("\nOutputs written:")

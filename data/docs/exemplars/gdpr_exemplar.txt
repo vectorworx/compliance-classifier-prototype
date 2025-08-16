@@ -1,0 +1,7 @@
+Policy: Personal Data Breach Response
+
+We notify the supervisory authority within seventy-two hours of any personal data breach, without undue delay,
+and document the nature of the breach and the number of records affected.
+
+Personal data is collected for specified, explicit, and legitimate purposes and not further processed in a manner
+that is incompatible with those purposes. Data subjects retain the right to erasure under applicable conditions.

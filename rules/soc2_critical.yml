@@ -1,16 +1,18 @@
 rules:
-  - id: SOC2-ACCESS-CONTROL
-    label: Access Control
+  - id: SOC2-MFA
+    label: Multi-factor Authentication Required
     severity: critical
     type: regex
-    value: "(?i)(least privilege|role[-\\s]?based access|RBAC|multi[-\\s]?factor authentication|MFA|access controls?)"
-  - id: SOC2-BACKUP-TEST
-    label: Backup Restoration Testing
-    severity: critical
+    value: "(?i)(multi[-\\s]?factor|MFA).{0,40}(required|enforced|must|mandatory)"
+
+  - id: SOC2-LEAST-PRIV
+    label: Least Privilege Access
+    severity: high
     type: regex
-    value: "(?i)(backup(s)?|restore tests?).{0,60}(quarterly|monthly|periodic|regular)"
-  - id: SOC2-ENCRYPTION
-    label: Encryption In Transit & At Rest
-    severity: critical
+    value: "(?i)(least\\s+privilege|minimum\\s+necessary\\s+access)"
+
+  - id: SOC2-LOG-REVIEWS
+    label: Centralized Logging & Reviews
+    severity: high
     type: regex
-    value: "(?i)(encrypt(ed|ion)|TLS|HTTPS|at rest|in transit)"
+    value: "(?i)(logs?|logging).{0,80}(retained|reviewed|audited)"

@@ -5,11 +5,12 @@ on:
     branches: ["main"]
   pull_request:
     branches: ["main"]
-  workflow_dispatch: {}
+
+permissions:
+  contents: read
 
 jobs:
   build-and-test:
-    name: build-and-test
     runs-on: ubuntu-latest
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -29,19 +30,31 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install black pdfplumber python-docx PyYAML pandas pytest streamlit pre-commit detect-secrets
+          pip install black pdfplumber python-docx PyYAML pandas pytest pytest-cov coverage pre-commit detect-secrets
 
       - name: Run pre-commit (format, hygiene, secrets)
-        run: pre-commit run --all-files --show-diff-on-failure
+        run: pre-commit run --all-files
 
       - name: Code style (Black check)
         run: black --check .
 
-      - name: Run smoke tests
-        run: python -m pytest -q tests/smoke_test.py
+      - name: Run tests with coverage (rules-only path)
+        # Using explicit flags so it works even without pyproject config
+        run: |
+          python -m pytest -q -m "not ai" --cov=./ --cov-report=term-missing --cov-report=xml:coverage.xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+          flags: unittests
+          verbose: true
+        env:
+          # For public repos + GitHub App install, no CODECOV_TOKEN needed.
+          # If you ever need a token (private repo), add CODECOV_TOKEN in GitHub Secrets.
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   demo:
-    name: demo
     runs-on: ubuntu-latest
     needs: build-and-test
     env:
