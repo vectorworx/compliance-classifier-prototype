@@ -1,6 +1,14 @@
 comment: false
+
+# Robust path normalization. Order matters: most specific first.
 fixes:
-  - "audit.py::src/audit.py"
-  - "engine.py::src/engine.py"
-  - "env.py::src/env.py"
-  - "llm_layer.py::src/llm_layer.py"
+  # GitHub Actions Linux workspace prefix
+  - '/home/runner/work/compliance-classifier-prototype/compliance-classifier-prototype/::'
+  # GitHub Actions Windows workspace prefix (escaped backslashes inside single quotes)
+  - 'D:\a\compliance-classifier-prototype\compliance-classifier-prototype\::'
+  # Local absolute path prefix from Phil’s workstation (in case it leaks into reports)
+  - 'C:\Users\philt\Documents\Projects\cc-prototype\::'
+  # Last-resort backslash→slash normalization (best-effort; Codecov treats fixes as path mapping)
+  - '\\::/'
+
+# (leave other settings as-is if you had them previously)

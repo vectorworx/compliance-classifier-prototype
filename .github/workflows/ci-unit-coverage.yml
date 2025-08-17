@@ -40,6 +40,18 @@ jobs:
           coverage report -m || true
 
       - name: Upload to Codecov (CI context)
+      - name: Debug coverage paths
+        run: |
+          set -euo pipefail
+          echo "PWD=$(pwd)"
+          echo "BRANCH=$(git rev-parse --abbrev-ref HEAD)  SHA=$(git rev-parse HEAD)"
+          test -f coverage.xml || { echo "coverage.xml missing" >&2; exit 1; }
+          echo "--- HEAD of coverage.xml (first 60 lines) ---"
+          head -n 60 coverage.xml || true
+          echo "--- sample filenames from coverage.xml ---"
+          grep -oE "filename=\"[^\"]+\"" coverage.xml | sed -E "s/.*filename=\"(.*)\"/\1/" | head -n 25 || true
+          echo "--- any absolute paths? (drive letters or /home/runner) ---"
+          grep -E "^[[:space:]]*<class filename=\"([A-Za-z]:\\\\|[A-Za-z]:/|/home/runner/)" -n coverage.xml || true
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
