@@ -1,0 +1,3 @@
+# Minimal Codecov config for path mapping
+fixes:
+  - "::src/"
