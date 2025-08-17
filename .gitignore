@@ -1,35 +1,48 @@
-# Python
-.venv/
-__pycache__/
-*.pyc
+# --- Vectorworx / Compliance Classifier — ignore rules ---
 
-# Data & artifacts
-data/outputs/
-*.sqlite
-*.log
-
-# OS/Editor
+# OS & editors
 .DS_Store
-.vscode/*
-!.vscode/extensions.json
+Thumbs.db
+.vscode/
 !.vscode/settings.json
-!.vscode/launch.json
-.env
-.env
-.env
-.env
+!.vscode/extensions.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+.pytest_cache/
+.mypy_cache/
+.cache/
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Coverage & test artifacts
 .coverage
+.coverage.*
+htmlcov/
 coverage.xml
-.coveragerc.bak
-pytest.ini.bak
-.coveragerc.bak
-pytest.ini.bak
-.coveragerc.bak
-pytest.ini.bak
-/codecov.exe
-/codecov_payload.txt
-/synthetic_cobertura.xml
-/coverage_patched.xml
-/step_*.log
-/step_fix_eof.list
-/step_staged.list
+*.lcov
+*.cov
+*.gcov
+
+# StepLock & diagnostics
+.steplock/
+*.log
+upload_bundle_*.tar.gz
+env_scout_report_*.json
+env_scout_report_*.md
+
+# Scratch / backups
+*.bak
+*.tmp
+*~
+*.swp
+*.swo
+
+# Project data outputs (generated)
+data/outputs/
