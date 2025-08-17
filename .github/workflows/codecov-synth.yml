@@ -1,0 +1,47 @@
+name: codecov-synth
+on:
+  workflow_dispatch:
+  push:
+    branches: [ codecov-action-debug ]
+
+jobs:
+  upload-synth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create synthetic Cobertura (src/engine.py with 1 hit, 1 miss)
+        run: |
+          cat > synthetic_cobertura.xml <<'XML'
+          <?xml version="1.0" ?>
+          <!DOCTYPE coverage SYSTEM "http://cobertura.sourceforge.net/xml/coverage-04.dtd">
+          <coverage lines-valid="2" lines-covered="1" line-rate="0.5" branches-valid="0" branches-covered="0" branch-rate="0" version="synthetic" timestamp="0">
+            <packages>
+              <package name="src" line-rate="0.5" branch-rate="0">
+                <classes>
+                  <class name="engine" filename="src/engine.py" line-rate="0.5" branch-rate="0">
+                    <lines>
+                      <line number="1" hits="1"/>
+                      <line number="2" hits="0"/>
+                    </lines>
+                  </class>
+                </classes>
+              </package>
+            </packages>
+          </coverage>
+          XML
+          ls -l synthetic_cobertura.xml
+          head -40 synthetic_cobertura.xml
+
+      - name: Upload to Codecov (CI context)
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: vectorworx/compliance-classifier-prototype
+          files: ./synthetic_cobertura.xml
+          flags: synthetic
+          name: ci-synth
+          override_commit: ${{ github.sha }}
+          override_branch: ${{ github.ref_name }}
+          verbose: true
+          fail_ci_if_error: true
