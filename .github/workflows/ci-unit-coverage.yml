@@ -25,6 +25,13 @@ jobs:
           pip install pytest coverage pytest-cov
 
       - name: Run pytest with coverage
+      - name: Archive coverage.xml (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-ci-unit-${{ github.sha }}
+          path: coverage.xml
+          if-no-files-found: error
         run: |
           set -euo pipefail
           coverage erase
