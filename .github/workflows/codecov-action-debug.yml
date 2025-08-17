@@ -1,0 +1,38 @@
+name: Codecov Action v4 Debug
+on:
+  push:
+    branches: [codecov-action-debug]
+  workflow_dispatch:
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure coverage.xml (debug fallback)
+        run: |
+          test -f coverage.xml || printf '<?xml version="1.0" ?><coverage line-rate="0" branch-rate="0" version="0" timestamp="0"><packages/></coverage>' > coverage.xml
+          ls -l coverage.xml
+
+      - name: Print GitHub context
+        run: |
+          echo "GITHUB_REPOSITORY=${GITHUB_REPOSITORY}"
+          echo "GITHUB_SHA=${GITHUB_SHA}"
+          echo "GITHUB_REF_NAME=${GITHUB_REF_NAME}"
+
+      - name: Codecov Action v4 (verbose)
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.xml
+          slug: vectorworx/compliance-classifier-prototype
+          override_commit: ${{ github.sha }}
+          override_branch: ${{ github.ref_name }}
+          verbose: true
+          fail_ci_if_error: true
