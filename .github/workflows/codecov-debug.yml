@@ -1,0 +1,64 @@
+name: Codecov Debug
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  statuses: write
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: src
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest pytest-cov coverage
+
+      - name: Run tests (emit coverage.xml)
+        run: |
+          rm -f .coverage coverage.xml || true
+          python -m pytest -q -m "not ai" \
+            --cov=src \
+            --cov-report=term-missing:skip-covered \
+            --cov-report=xml:coverage.xml
+          test -s coverage.xml
+
+      - name: Codecov action upload
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: vectorworx/compliance-classifier-prototype
+          override_commit: ${{ github.sha }}
+          override_branch: ${{ github.ref_name }}
+          flags: unittests
+          name: compliance-classifier
+          verbose: true
+          fail_ci_if_error: true
+
+      - name: Manual uploader (prints link)
+        run: |
+          npm i -g @codecov/uploader@latest
+          codecov \
+            -f coverage.xml \
+            -t "${CODECOV_TOKEN}" \
+            -r vectorworx/compliance-classifier-prototype \
+            -B "${GITHUB_REF_NAME}" \
+            -C "${GITHUB_SHA}" \
+            -n "manual-uploader" \
+            -F "unittests" \
+            -v
