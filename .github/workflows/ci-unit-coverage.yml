@@ -1,0 +1,43 @@
+name: ci-unit-coverage
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install test deps
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          pip install pytest coverage pytest-cov
+
+      - name: Run pytest with coverage
+        run: |
+          set -euo pipefail
+          coverage erase
+          coverage run -m pytest -q
+          coverage xml -o coverage.xml
+          coverage report -m || true
+
+      - name: Upload to Codecov (CI context)
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: vectorworx/compliance-classifier-prototype
+          files: ./coverage.xml
+          flags: unit
+          name: ci-unit
+          verbose: true
+          fail_ci_if_error: true
