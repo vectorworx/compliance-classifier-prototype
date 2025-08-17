@@ -1,2 +1,6 @@
-# Minimal Codecov config; no path fixes
 comment: false
+fixes:
+  - "audit.py::src/audit.py"
+  - "engine.py::src/engine.py"
+  - "env.py::src/env.py"
+  - "llm_layer.py::src/llm_layer.py"
