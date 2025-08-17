@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?><Error><Code>SignatureDoesNotMatch</Code><Message>Access denied.</Message><Details>The request signature we calculated does not match the signature you provided. Check your Google secret key and signing method.</Details><StringToSign>AWS4-HMAC-SHA256
+20250817T093617Z
+20250817/us/s3/aws4_request
+03293488b7a206731b49cf53e1384e0be8706554a338301d8a167049e8d99fa6</StringToSign><CanonicalRequest>GET
+/codecov-production/shelter/v4/github/vectorworx/compliance-classifier-prototype/4d2e1e65193fb6920b8d284667dcaf38397536a9/c7d27887-8e2d-4077-920e-66fd559a8781.txt
+X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=GOOG1EJWQHUGIBILH4J7Q6ZUSCIFNEOLYSNDS7L3B4N5SIBQ2J4YLYE5CRFCD%2F20250817%2Fus%2Fs3%2Faws4_request&amp;X-Amz-Date=20250817T093617Z&amp;X-Amz-Expires=120&amp;X-Amz-SignedHeaders=host
+host:storage.googleapis.com
+
+host
+UNSIGNED-PAYLOAD</CanonicalRequest></Error>

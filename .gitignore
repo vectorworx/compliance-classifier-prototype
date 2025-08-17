@@ -26,3 +26,10 @@ pytest.ini.bak
 pytest.ini.bak
 .coveragerc.bak
 pytest.ini.bak
+/codecov.exe
+/codecov_payload.txt
+/synthetic_cobertura.xml
+/coverage_patched.xml
+/step_*.log
+/step_fix_eof.list
+/step_staged.list
