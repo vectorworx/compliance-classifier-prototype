@@ -1,7 +1,7 @@
 # Compliance Classifier Prototype
 
 [![CI](https://github.com/vectorworx/compliance-classifier-prototype/actions/workflows/ci.yml/badge.svg)](https://github.com/vectorworx/compliance-classifier-prototype/actions)
-[![codecov](https://codecov.io/gh/vectorworx/compliance-classifier-prototype/branch/main/graph/badge.svg)](https://app.codecov.io/gh/vectorworx/compliance-classifier-prototype)
+[![codecov - main](https://codecov.io/gh/vectorworx/compliance-classifier-prototype/branch/main/graph/badge.svg?t=f84be57)](https://app.codecov.io/gh/vectorworx/compliance-classifier-prototype?branch=main) [![codecov - codecov-action-debug](https://codecov.io/gh/vectorworx/compliance-classifier-prototype/branch/codecov-action-debug/graph/badge.svg?t=f84be57)](https://app.codecov.io/gh/vectorworx/compliance-classifier-prototype?branch=codecov-action-debug)
 
 > CI runs a demo on each push and uploads outputs as artifacts:
 > **Actions → latest run → Artifacts** → `findings-<run_id>` and `audit-db-<run_id>`.
