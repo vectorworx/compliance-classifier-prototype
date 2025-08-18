@@ -53,3 +53,10 @@ jobs.tsv
 step_status*.txt
 step_run_full.err
 rerun.err
+.ccci/
+badge.svg
+step*_badge.svg
+jobs.tsv
+step_status*.txt
+step_run_full.err
+rerun.err
