@@ -1,8 +1,9 @@
 # Compliance Classifier Prototype
 
 [![CI](https://github.com/vectorworx/compliance-classifier-prototype/actions/workflows/ci.yml/badge.svg)](https://github.com/vectorworx/compliance-classifier-prototype/actions)
-[![codecov - main](https://codecov.io/gh/vectorworx/compliance-classifier-prototype/branch/main/graph/badge.svg)](https://app.codecov.io/gh/vectorworx/compliance-classifier-prototype?branch=main)
-[![codecov - codecov-action-debug](https://codecov.io/gh/vectorworx/compliance-classifier-prototype/branch/codecov-action-debug/graph/badge.svg)](https://app.codecov.io/gh/vectorworx/compliance-classifier-prototype?branch=codecov-action-debug)
+[![codecov - main](https://codecov.io/gh/vectorworx/compliance-classifier-prototype/branch/main/graph/badge.svg?token=27d63549-37a0-4838-9a5c-c7d6da051535&t=1)](https://app.codecov.io/gh/vectorworx/compliance-classifier-prototype/tree/main)
+
+[![codecov - codecov-action-debug](https://codecov.io/gh/vectorworx/compliance-classifier-prototype/branch/codecov-action-debug/graph/badge.svg?token=27d63549-37a0-4838-9a5c-c7d6da051535&t=2)](https://app.codecov.io/gh/vectorworx/compliance-classifier-prototype/tree/codecov-action-debug)
 
 > ⚠️ **Prototype Status:** Active development. Expect changes in structure and outputs.
 > ✅ CI + Coverage reporting are live and stable.
