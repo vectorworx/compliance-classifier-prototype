@@ -1,211 +1,155 @@
 # Compliance Classifier Prototype
 
 [![CI](https://github.com/vectorworx/compliance-classifier-prototype/actions/workflows/ci.yml/badge.svg)](https://github.com/vectorworx/compliance-classifier-prototype/actions)
-[![codecov - main](https://codecov.io/gh/vectorworx/compliance-classifier-prototype/branch/main/graph/badge.svg?t=f84be57)](https://app.codecov.io/gh/vectorworx/compliance-classifier-prototype?branch=main) [![codecov - codecov-action-debug](https://codecov.io/gh/vectorworx/compliance-classifier-prototype/branch/codecov-action-debug/graph/badge.svg?t=f84be57)](https://app.codecov.io/gh/vectorworx/compliance-classifier-prototype?branch=codecov-action-debug)
+[![codecov - main](https://codecov.io/gh/vectorworx/compliance-classifier-prototype/branch/main/graph/badge.svg)](https://app.codecov.io/gh/vectorworx/compliance-classifier-prototype?branch=main)
+[![codecov - codecov-action-debug](https://codecov.io/gh/vectorworx/compliance-classifier-prototype/branch/codecov-action-debug/graph/badge.svg)](https://app.codecov.io/gh/vectorworx/compliance-classifier-prototype?branch=codecov-action-debug)
 
-> CI runs a demo on each push and uploads outputs as artifacts:
-> **Actions → latest run → Artifacts** → `findings-<run_id>` and `audit-db-<run_id>`.
-
-# Compliance-First Document Classifier (GDPR + SOC 2)
-
-## Proof Block
-
-📊 **Target Accuracy:** 95% on standard terms, 100% recall on critical
-⏱️ **Target Processing Time:** 2 hrs → <10 min per batch
-🛡️ **Target Compliance:** Zero violations in 1,000-doc test
+> ⚠️ **Prototype Status:** Active development. Expect changes in structure and outputs.
+> ✅ CI + Coverage reporting are live and stable.
+> 📦 Demo outputs available via **Actions → latest run → Artifacts** (`findings-<run_id>`, `audit-db-<run_id>`).
 
 ---
 
-## Runway Check (Why Now?)
+## 📌 Compliance-First Document Classifier
 
-Legal and compliance teams waste hours manually scanning contracts, policies, and agreements for key clauses.
-Regulations like GDPR and SOC 2 make omissions costly — in fines and reputation.
-This prototype shows how AI can reduce review time while improving accuracy and audit readiness.
+AI-ready pipeline to scan contracts, policies, and compliance docs against GDPR, SOC 2, and related regimes. Produces an **append-only audit log** plus structured CSV/JSON findings.
 
-## Flight Plan
+---
 
-**THEN:** Manual review, regex scripts, basic keyword search
-**NOW:** LLM-powered extraction with explainability + audit trail
+## ✈️ Proof Block
 
-## Cockpit View (Architecture)
+- 📊 **Accuracy Goal:** 95% on standard clauses, 100% recall on critical
+- ⏱️ **Processing Goal:** 2 hrs → <10 min per batch
+- 🛡️ **Compliance Goal:** Zero violations in 1,000-doc test
 
-_(Diagram to be added in later commit)_
+---
 
-## Pre-Flight Checklist
+## 🛫 Runway Check (Why Now?)
 
-- [ ] Dependencies list
-- [ ] API keys required
-- [ ] Example documents included
-- [ ] Performance baseline metrics
+- Manual compliance review is **slow and error-prone**.
+- GDPR/SOC 2 penalties make omissions costly.
+- This prototype shows how **deterministic rules + AI augmentation** can shrink review time while strengthening audit readiness.
 
-## Implementation
+---
 
-_(Coming in later commits)_
+## 🗺️ Flight Plan
 
-## Flight Data (Results)
+- **THEN:** Manual review, regex scripts, keyword search
+- **NOW:** Deterministic rules + LLM-assisted extraction with audit trail
 
-_(Coming in later commits)_
+---
 
-## Black Box Recovery
+## 🛩️ Cockpit View (Architecture)
 
-_(Coming in later commits)_
+_(System diagram coming soon)_
 
-## Scale Path
+- **Inputs:** PDFs, DOCX, TXT (sample docs included)
+- **Engine:** Rule-based baseline, LLM layer planned
+- **Outputs:** Timestamped CSV/JSON + append-only SQLite log
+- **Dashboard:** Streamlit app (read-only, local demo)
 
-_(Coming in later commits)_
+---
 
-## Post-Flight Debrief
+## ✅ Pre-Flight Checklist
 
-_(Coming in later commits)_
+- [x] CI & coverage reporting wired up
+- [x] Baseline GDPR/SOC2 rules implemented
+- [ ] Expand test corpus
+- [ ] Add AI-assisted mode
+- [ ] Publish performance benchmarks
 
-## 📄 How to Read the Findings CSV — Vectorworx OneBlock
+---
 
-Every run of the Compliance Classifier produces a `findings_<regime>_<timestamp>.csv` file in the project root.
+## 📄 Findings Format — Vectorworx OneBlock
 
-Example row:
-`rule_id,label,severity,start,end,snippet,doc`
-`GDPR-BREACH-72H,Breach Notification (72h),critical,3,60,"We notify the supervisory authority within seventy-two hours of a personal data breach. All users must use MFA as part of access controls.",sample.txt`
+Every run produces a `findings_<regime>_<timestamp>.csv` file.
 
-**Column meanings:**
+**Example row:**
 
-- `rule_id` → Unique ID for the compliance rule triggered.
-- `label` → Human-readable name of the rule.
-- `severity` → Risk level (`critical`, `high`, `medium`, `low`).
-- `start` / `end` → Character offsets in the source document for the match.
-- `snippet` → Exact text fragment that triggered the match.
-- `doc` → File name of the source document.
+```csv
+rule_id,label,severity,start,end,snippet,doc
+GDPR-BREACH-72H,Breach Notification (72h),critical,3,60,"We notify the authority within seventy-two hours of a breach.",sample.txt
+```
 
-**Pro tips (VS Code):** Install **Rainbow CSV**, open the file, and you’ll see columns colorized for quick scanning. Use `CTRL+SHIFT+P → CSV: Run SQL Query` to filter findings interactively.
+**Columns:**
 
-**Why this matters in production:**
+- `rule_id` → unique compliance rule
+- `label` → human-readable name
+- `severity` → critical/high/medium/low
+- `start` / `end` → character offsets
+- `snippet` → triggering text
+- `doc` → source filename
 
-- CSVs are lightweight, portable, and quick to review.
-- They serve as **ground truth baseline** before adding AI classification.
-- They’re easy to feed into dashboards, BI tools, or downstream analytics.
+💡 **Pro tip (VS Code):** Install Rainbow CSV for instant column highlighting. Use CSV: Run SQL Query to slice findings interactively.
 
-### 📊 Audit Dashboard (Read‑Only)
+---
 
-Run a local Streamlit dashboard over the append‑only SQLite audit log:
+## 📊 Audit Dashboard (Local Demo)
 
-```bash
+Run a Streamlit dashboard over the audit log:
+
+```sh
 pip install streamlit
 streamlit run streamlit_app.py
 ```
 
-## ✅ Results (Baseline Before AI)
-
-This section shows the first end‑to‑end run of the Compliance Classifier on a small, controlled document set. It’s our **baseline** (rules‑only) before layering in AI.
+The dashboard shows KPIs, per-rule counts, per-doc counts, and exportable CSVs.
 
 ---
 
-### Mini Proof Block (Sample Output)
-
-PROOF BLOCK — GDPR
-
-📄 Docs scanned: 3
-🔎 Findings: 2 | 🔥 Critical: 1 | ⬆ High: 0
-🏷️ Top rule hit: GDPR-BREACH-72H ×1
-⬇ Output: data/outputs/findings_gdpr_20250815-153200.csv
-⬇ Output: data/outputs/findings_gdpr_20250815-153200.json
-🧾 Audit run_id: 3a3f7b1c-2d9b-4b33-b6e8-0a1b0e34d2f1
-
-**What this means:**
-
-- The engine detected the **72‑hour breach notification clause** in `breach_gdpr.pdf` (critical).
-- `clean_soc2.txt` produced **no GDPR findings** (as expected).
-- `edgecase_gdpr.txt` avoided the exact pattern (by design) — this becomes a great **test case for the AI layer**.
-
----
-
-### Dashboard Snapshot
-
-> _Read‑only Streamlit dashboard over the append‑only SQLite audit log._
-
-- **Filters:** regime, rule_id, document, date range
-- **KPIs:** total findings, unique docs, unique rules hit
-- **Tables:** recent findings, per‑rule counts, per‑doc counts
-- **Export:** download filtered CSV
-
-**Run locally:**
-
-```bash
-streamlit run dashboard.py
-
-Files Produced
-
-CSV/JSON findings (timestamped): data/outputs/findings_<regime>_<timestamp>.csv|.json
-
-Append‑only audit log: data/cc_audit.sqlite (queried by the dashboard)
-
-Why This Matters
-
-Deterministic baseline: Rules give us a fast, auditable ground truth with zero token cost.
-
-Paper trail: Every run is logged with run_id, version, and timestamp in SQLite — easy to prove and replay.
-
-Ready for AI: Ambiguous/edge cases (like the “promptly inform regulators” phrasing) become targets for the upcoming LLM pass with confidence + rationale.
-```
-
-## Build • Test • Demo
-
-[![CI](https://github.com/vectorworx/compliance-classifier-prototype/actions/workflows/ci.yml/badge.svg)](../../actions)
-
-### 1) Setup
-
-```bash
-python -m venv .venv
-source .venv/Scripts/activate   # Windows Git Bash
-python -m pip install --upgrade pip
-pip install -r requirements.txt || pip install pdfplumber python-docx PyYAML pandas pytest streamlit
-```
-
-## 🚀 Quickstart — Local & Codespaces (Vectorworx One‑Block)
-
-Production‑first setup that runs in minutes. This section is self‑contained and ready to paste into your README.
-
----
+## 🚀 Quickstart
 
 ### Local Setup
 
-```bash
-# 1) Create & activate virtual environment
+```sh
+# 1) Create venv
 python -m venv .venv
-# Windows (Git Bash/PowerShell):
-source .venv/Scripts/activate
-# macOS/Linux:
-# source .venv/bin/activate
+source .venv/Scripts/activate   # Windows Git Bash
+# source .venv/bin/activate     # macOS/Linux
 
 # 2) Install dependencies
 python -m pip install --upgrade pip
 pip install -r requirements.txt \
   || pip install pdfplumber python-docx PyYAML pandas pytest streamlit
 
-# 3) (Optional) Enable AI-assisted mode for later
-cp .env.example .env
-# Fill in OPENAI_API_KEY / ANTHROPIC_API_KEY (keep .env local; never commit)
-
-# 4) Run the compliance classifier (rules-only baseline)
+# 3) Run baseline scan
 python cc_mvp.py --regime GDPR
 # or
 python cc_mvp.py --regime SOC2
-
-## What you’ll see (baseline):
-
-Timestamped CSV/JSON in data/outputs/
-
-Append‑only audit log in data/cc_audit.sqlite
-
-Console summary with top rules and preview snippets
-
-☁️ ## One‑Click Codespaces (Zero‑install)
-
-Inside the Codespace terminal:
-
-# Demo run: scans sample docs and writes outputs + audit log
-python demo.py
-
-# Read‑only dashboard over the SQLite audit log
-streamlit run dashboard.py   # Open forwarded Port 8501 in the "Ports" panel
 ```
 
-# Trigger CI
+**Outputs:**
+
+- CSV/JSON findings → `data/outputs/`
+- Audit log → `data/cc_audit.sqlite`
+
+### Codespaces (One-Click)
+
+```sh
+python demo.py
+streamlit run dashboard.py   # Open forwarded Port 8501
+```
+
+---
+
+## 📈 Current Baseline Results (Sample)
+
+- 📄 Docs scanned: 3
+- 🔎 Findings: 2 (1 critical GDPR breach clause detected)
+- ⬇ Outputs: CSV + JSON in `/data/outputs/`
+- 🧾 Audit trail: SQLite log with run_id + timestamp
+
+---
+
+## 🛬 Roadmap
+
+- Broaden rule set (HIPAA, ISO 27001)
+- Integrate LLM explanation layer
+- Add production connectors (S3, GDrive)
+- Deployable dashboard (Streamlit/Gradio)
+
+---
+
+## 📝 Post-Flight Debrief
+
+This repo is a prototype — proving deterministic compliance scanning works at speed, and laying the runway for AI-assisted classification with explainability and audit-grade outputs.
